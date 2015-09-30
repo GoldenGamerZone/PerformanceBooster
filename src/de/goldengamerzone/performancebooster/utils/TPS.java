@@ -11,7 +11,7 @@ public class TPS {
 
 	private static Long lastMillis;
 
-	private static ArrayList<Double> delays = new ArrayList<Double>();
+	private static ArrayList<Long> delays = new ArrayList<Long>();
 
 	public static void startScanning(Plugin plugin) {
 		if (!startedScanning) {
@@ -20,11 +20,14 @@ public class TPS {
 			taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
 				public void run() {
 					Long delay = System.currentTimeMillis() - lastMillis;
-					Double delayInPercent = (delay / 50.0);
 					if (delays.size() >= 20) {
-						delays.remove(0);
+						delays.remove(delays.get(0));
 					}
-					delays.add(delayInPercent);
+					if (delay < 50L) {
+						delay = 50L;
+					}
+					delays.add(delay);
+					lastMillis = System.currentTimeMillis();
 				}
 			}, 1L, 1L);
 		}
@@ -48,19 +51,21 @@ public class TPS {
 			if (delays.size() != 0) {
 				if (delays.size() == 20) {
 					Double toReturn = 0.0;
-					for (Double currentDelayInPercent : delays) {
-						toReturn = toReturn + currentDelayInPercent;
+					for (Long delay : delays) {
+						toReturn = toReturn + delay.doubleValue();
 					}
+					toReturn = (1000.0 / toReturn) * 20.0;
 					return toReturn;
 				} else {
 					Double average = 0.0;
 					Double dividend = 0.0;
-					for (Double currentDelayInPercent : delays) {
+					for (Long delay : delays) {
 						dividend++;
-						average = average + currentDelayInPercent;
+						average = average + delay.doubleValue();
 					}
 					average = (average / dividend);
 					Double toReturn = (average * 20.0);
+					toReturn = (1000.0 / toReturn) * 20.0;
 					return toReturn;
 				}
 			} else {
